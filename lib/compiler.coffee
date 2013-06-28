@@ -7,6 +7,7 @@ compress = require('./utils/compressor')
 output_path = require('./utils/output_path')
 _ = require('underscore')
 Asset = require('./asset')
+roots = require
 
 class Compiler extends EventEmitter
   ###*
@@ -15,17 +16,10 @@ class Compiler extends EventEmitter
    * @constructor
   ###
   constructor: ->
-    compiler.on "error", (err) ->
+    @on 'error', (err) ->
       print.error err
       add_error_messages.call @, err, @finish
     return
-
-  ###*
-   * either 'build' or 'dev'
-   * @type {String}
-   * @public
-  ###
-  mode: 'build'
 
   ###*
    * Emits an event to notify listeners that everything is compiled
@@ -80,7 +74,7 @@ class Compiler extends EventEmitter
    * @param {[type]} file [description]
    * @param {Compiler~doneCallback} cb
    * @return {[type]} [description]
-   * @uses Compiler.mode
+   * @uses Project.mode
   ###
   copy: (file, cb) ->
     # TODO: Run the file copy operations as async (ncp)
@@ -97,7 +91,7 @@ class Compiler extends EventEmitter
         fs.existsSync(destination) or fs.symlinkSync(file, destination)
       else
         shell.cp '-f', file, destination
-    options.debug.log "copied #{file.replace(process.cwd(), '')}"
+    options.debug.log "copied #{file.replace(roots.project.root_dir, '')}"
     cb()
 
   ###*
@@ -126,7 +120,7 @@ module.exports = Compiler
 
 # @api private
 
-plugin_path = path.join(process.cwd() + '/plugins')
+plugin_path = path.join(roots.project.root_dir + '/plugins')
 plugins = fs.existsSync(plugin_path) and shell.ls(plugin_path)
 
 ###*
@@ -139,7 +133,7 @@ get_adapters_by_extension = (extensions) ->
   matching_adapters = []
   extensions.reverse().forEach (ext) =>
     for key of adapters
-      matching_adapters.push adapters[key]  if adapters[key].settings.file_type is ext
+      matching_adapters.push adapters[key] if adapters[key].settings.file_type is ext
 
   matching_adapters
 
